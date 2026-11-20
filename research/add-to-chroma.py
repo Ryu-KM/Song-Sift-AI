@@ -18,10 +18,17 @@ model = SentenceTransformer("sentence-transformers/all-MiniLM-L12-v2", trust_rem
 model.max_seq_length = 512
 model.tokenizer.padding_side = "right"
 
-# Load the lyrics from the JSON file (adjust the path to your file)
-json_file_path = 'data/t_songs_with_lyrics.json'  # Change this to your JSON file path
-with open(json_file_path, 'r') as file:
-    lyrics_data = json.load(file)
+# Load songs from every lyrics file, skipping songs with no lyrics and duplicate ids
+json_file_paths = ['data/t_songs_with_lyrics.json', 'data/pop_songs_with_lyrics.json']
+lyrics_data = []
+seen_ids = set()
+for json_file_path in json_file_paths:
+    with open(json_file_path, 'r') as file:
+        for song in json.load(file):
+            if song.get('lyrics') and song['id'] not in seen_ids:
+                seen_ids.add(song['id'])
+                lyrics_data.append(song)
+print(f"Loaded {len(lyrics_data)} songs with lyrics")
 
 # Function to add end-of-sequence token if required
 def add_eos(input_examples):
