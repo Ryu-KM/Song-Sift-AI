@@ -20,7 +20,7 @@ if not os.path.exists(persist_directory):
     os.makedirs(persist_directory)
 
 client = chromadb.PersistentClient(path=persist_directory)
-collection = client.get_or_create_collection("lyrics_similarity_collection", metadata={"hnsw:space": "cosine"})
+collection = client.get_or_create_collection("gemini_lyrics_collection", metadata={"hnsw:space": "cosine"})
 
 # Configure Gemini API
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -50,7 +50,8 @@ class SummaryRequest(BaseModel):
 def compute_query_embedding(query_text: str) -> List[float]:
     # Use Gemini API to get embedding for the query text
     result = genai.embed_content(
-        model="models/text-embedding-004",
+        model="models/gemini-embedding-001",
+        output_dimensionality=768,  # must match between ingest and query
         content=query_text
     )
     query_embedding = result['embedding']
@@ -58,7 +59,7 @@ def compute_query_embedding(query_text: str) -> List[float]:
 
 def generate_summary(artist: str, title: str, lyrics: List[str]) -> str:
     try:
-        model = genai.GenerativeModel("gemini-2.0-flash-lite")
+        model = genai.GenerativeModel("gemini-3.5-flash-lite")
         content_to_summarize = f"Song: {title} by {artist}. Lyrics:\n" + "\n".join(lyrics)
         response = model.generate_content(
             f"Summarize the following song in 2-3 sentences, always refer to the singers with their name and not just the singer:\n\n{content_to_summarize}"
