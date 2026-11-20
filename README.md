@@ -1,5 +1,5 @@
-# Similar-Content-Extraction-Senior-Proj
-AI Similar Content Extractor Drexel senior project 24-25
+# Sound-Sift-AI
+AI Similar Content Extractor Drexel University senior project 2025 (continued)
 
 ## Build
 
