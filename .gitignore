@@ -12,3 +12,4 @@ research/audio_extraction/songs/*.jpg
 __pycache__/
 src/webservice/recordings/
 src/webservice/uploads/
+.venv/
