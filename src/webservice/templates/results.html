@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .top-song-summary {
+            max-width: 435px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+    </style>
+</head>
+<body>
+    <a href="/"><img src="{{ url_for('static', filename='SoundSiftTransparent.png') }}" alt="Logo" class="logo"></a>
+
+    <div class="container">
+        {% if songs %}
+        <div class="results-wrapper">
+            <div class="top-songs">
+                <h1><strong>Results for "{{ query_input }}"</strong></h1>
+                {% for song in songs %}
+                <div class="song-item">
+                    <div class="album-art-container">
+                        <a href="{{ song.spotify_link }}" target="_blank">
+                            <img src="{{ song.album_art }}" alt="Album Art" class="album-art">
+                        </a>
+                    </div>
+                    <div class="song-details-container">
+                        <div class="top-song-title">{{ song.title }}</div>
+                        <div class="top-song-artist">{{ song.artist }}</div>
+                        <div class="top-song-score">Score: {{ song.similarity_score | round(2) }}</div>
+                        <!-- Toggle Lyrics Button -->
+                        <button class="toggle-lyrics-btn" onclick="toggleLyrics('lyrics-{{ loop.index }}')" style="background-color: #6b4abc; border-radius: 25px; padding: 10px 20px; border: none; color: white; cursor: pointer;">Show Relevant Lyrics</button>
+
+                        <!-- Hidden Lyrics Section -->
+                        <div class="lyrics-container" id="lyrics-{{ loop.index }}" style="display: none;">
+                            {% for lyric in song.lyrics %}
+                                <div class="lyric-line">{{ lyric }}</div>
+                            {% endfor %}
+                        </div> 
+
+                    </div>
+                    <div class="button-container">
+                        <a href="{{ song.spotify_link }}" target="_blank" class="action-btn" title="Listen on Spotify">
+                            <img src="/static/spotify_icon.png" alt="Spotify" class="icon">
+                            <span class="tooltip">Listen on Spotify</span>
+                        </a>
+                        <a href="{{ song.youtube_query }}" target="_blank" class="action-btn" title="Watch on YouTube">
+                            <img src="/static/youtube_icon.png" alt="YouTube" class="icon">
+                            <span class="tooltip">Find on YouTube</span>
+                        </a>
+                        <a href="#" class="action-btn open-popup-btn" title="Generate Summary"
+                            data-artist="{{ song.artist | replace('"', '&quot;') }}" 
+                            data-title="{{ song.title | replace('"', '&quot;') }}" 
+                            data-lyrics='{{ song.lyrics | tojson | safe }}' 
+                            onclick="handlePopup(event)">
+                            <img src="/static/sparkle_icon.png" alt="Generate Summary" class="icon">
+                            <span class="tooltip">Generate Summary</span>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="chart-container">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+
+        <script src="{{ url_for('static', filename='chart.js') }}" defer></script>
+
+        <div class="overlay" id="overlay"></div>
+        <div class="popup" id="popup">
+            <p id="summary">Generating summary...</p>   
+            <button class="close-btn" onclick="closePopup()">Close</button>
+        </div>
+
+        <script>
+            function openPopup(artist, title, lyrics, event) {
+                const popup = document.getElementById("popup");
+                const overlay = document.getElementById("overlay");
+
+                // Position the pop-up near the clicked button
+                const buttonRect = event.target.getBoundingClientRect();
+                popup.style.left = `${buttonRect.left + window.scrollX}px`;
+                popup.style.top = `${buttonRect.bottom + window.scrollY + 10}px`; // Position below button
+
+                overlay.style.display = "block";
+                popup.style.display = "block";
+
+                generateSummary(artist, title, lyrics);
+            }
+
+            function closePopup() {
+                document.getElementById("popup").style.display = "none";
+                document.getElementById("overlay").style.display = "none";
+            }
+
+            function handlePopup(event) {
+                const button = event.currentTarget;
+                const artist = button.getAttribute("data-artist");
+                const title = button.getAttribute("data-title");
+                const lyrics = JSON.parse(button.getAttribute("data-lyrics"));
+
+                openPopup(artist, title, lyrics, event);
+            }
+
+            async function generateSummary(artist, title, lyrics) {
+            const summaryText = document.getElementById("summary");
+            summaryText.innerText = "Generating summary...";
+
+            try {
+                const response = await fetch(
+                "/generate_summary",
+                {
+                    method: "POST",
+                    headers: {
+                    "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                    artist: artist,
+                    title: title,
+                    lyrics: lyrics,
+                    }),
+                }
+                );
+
+                if (!response.ok) {
+                throw new Error("Failed to generate summary");
+                }
+
+                const data = await response.json();
+                summaryText.innerText = data.summary;
+            } catch (error) {
+                summaryText.innerText = "Error generating summary.";
+                console.error("Error:", error);
+            }
+            }
+        </script>
+
+        <div class="pagination">
+            {% for p in range(1, total_pages + 1) %} {% if p == page %}
+            <span class="pagination-link current">{{ p }}</span>
+            {% else %}
+            <a
+            href="{{ url_for('results', query_input=query_input, page=p, per_page=5) }}"
+            class="pagination-link"
+            >{{ p }}</a
+            >
+            {% endif %} {% endfor %}
+        </div>
+
+        {% else %}
+        <p>No results found for "{{ query_input }}"</p>
+        {% endif %}
+        </div>
+    </body>
+    </html>
+
+<script>
+    function toggleLyrics(lyricsId) {
+        const lyricsElement = document.getElementById(lyricsId);
+        const button = lyricsElement.previousElementSibling;
+    
+        if (lyricsElement.style.display === "none") {
+            lyricsElement.style.display = "block";
+            button.textContent = "Hide Lyrics";
+        } else {
+            lyricsElement.style.display = "none";
+            button.textContent = "Show Relevant Lyrics";
+        }
+    }
+</script>

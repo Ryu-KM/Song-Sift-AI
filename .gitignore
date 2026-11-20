@@ -1,0 +1,12 @@
+**.DS_Store
+**/research/chromaFiles
+src/API/__pycache__/
+.cache
+api_keys.*
+ben_melaudioextraction/songs/*.mp3
+ben_melaudioextraction/songs/*.rar
+*.db
+ben_melaudioextraction/songs/*.nfo
+ben_melaudioextraction/songs/*.jpg
+*:Zone.Identifier
+__pycache__/

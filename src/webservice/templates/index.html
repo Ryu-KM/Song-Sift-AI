@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundSift</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='recorder.js') }}"></script>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
+</head>
+<body>
+    <a href="/"><img src="{{ url_for('static', filename='SoundSiftTransparent.png') }}" alt="Logo" class="logo"></a>
+    
+    <div class="segmented-control">
+        <input type="radio" name="mode" id="text" checked>
+        <input type="radio" name="mode" id="audio">
+        <div class="slider"></div>
+        <label for="text" class="segment">Text</label>
+        <label for="audio" class="segment">Audio</label>
+    </div>
+
+    <div class="header">
+        <h1 class="query-header">Analyze Song Lyrics</h1>
+    </div>
+
+    <div class="inputBox">
+        <!-- text input form -->
+        <form id="text-form" action="/results" method="get" autocomplete="off">
+            <div class="input-container">
+                <input type="text" id="query-input" name="query_input" placeholder="Enter your query" required autocomplete="off">
+                <button type="submit" id="submit-btn" class="submit-btn">
+                    <span class="material-symbols-rounded">send</span>
+                    <span class="spinner" id="text-spinner" style="display: none;"></span>
+                </button>
+            </div>
+        </form>
+
+        <!-- audio file upload form -->
+        <form id="audio-form" style="display: none;">
+            <div id="drop-zone" class="upload-container">
+                <label for="audio-file" class="upload-label">Upload audio file</label>
+                <input type="file" name="audio_file" id="audio-file" accept="audio/*" required>
+                <button id="upload-file-btn" class="upload-submit-btn">
+                    <span class="btn-text">Submit Uploaded File</span>
+                    <span class="spinner" id="upload-spinner" style="display: none;"></span>
+                </button>
+            </div>
+        </form>
+
+        <div class="suggestion-buttons" id="suggestion-buttons">
+            <button type="button" class="suggestion-btn" onclick="setExampleQuery('Love')">💗 Love</button>
+            <button type="button" class="suggestion-btn" onclick="setExampleQuery('All I need this holiday is you')">🎄 Christmas</button>
+            <button type="button" class="suggestion-btn" onclick="setExampleQuery('In awe of the beauty around me')">✨ Wonder</button>
+        </div>
+    </div>
+
+    <div class="audio-recording">
+        <div class="record-button-container">
+            <button type="button" id="record-btn" class="record-btn">Record</button>
+        </div>
+        <div id="audio-block" style="display: none;">
+            <div class="custom-audio-player" id="custom-player" style="display: none;">
+                <button id="play-pause-btn"><span class="material-symbols-rounded">play_arrow</span></button>
+                <input type="range" id="seek-bar" value="0" step="1">
+                <span id="current-time">0:00</span> / <span id="duration">0:00</span>
+            </div>
+            <audio id="audio-playback" style="display: none;"></audio>
+            <br>
+            <button id="query-from-audio" class="recording-submit-btn">
+                <span class="btn-text">Use Recording as Query</span>
+                <span class="spinner" id="recording-spinner" style="display: none; margin-left: 8px;"></span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const inputField = document.getElementById('query-input');
+        const submitButton = document.getElementById('submit-btn');
+        const textForm = document.getElementById('text-form');
+        const audioForm = document.getElementById('audio-form');
+        const deliverRadio = document.getElementById('text');
+        const collectRadio = document.getElementById('audio');
+
+        textForm.addEventListener('submit', function (e) {
+            const spinner = document.getElementById('text-spinner');
+            const submitIcon = submitButton.querySelector('span');
+
+            spinner.style.display = 'inline-block';
+            submitIcon.style.display = 'none';
+            submitButton.disabled = true;
+        });
+
+        submitButton.style.opacity = '0';
+        submitButton.style.pointerEvents = 'none';
+
+        inputField.addEventListener('input', function () {
+            if (inputField.value.trim() !== "") {
+                submitButton.style.opacity = '1';
+                submitButton.style.pointerEvents = 'auto';
+            } else {
+                submitButton.style.opacity = '0';
+                submitButton.style.pointerEvents = 'none';
+            }
+        });
+
+        function setExampleQuery(query) {
+            inputField.value = query;
+            submitButton.style.opacity = '1';
+            submitButton.style.pointerEvents = 'auto';
+        }
+
+        function updateInputMode() {
+            const suggestionBox = document.getElementById('suggestion-buttons');
+            if (deliverRadio.checked) {
+                textForm.style.display = 'block';
+                audioForm.style.display = 'none';
+                suggestionBox.style.display = 'block';
+            } else {
+                textForm.style.display = 'none';
+                audioForm.style.display = 'block';
+                suggestionBox.style.display = 'none';
+            }
+        }
+
+        deliverRadio.addEventListener('change', updateInputMode);
+        collectRadio.addEventListener('change', updateInputMode);
+        updateInputMode();
+    </script>
+
+<script>
+    let recorder;
+    let audioContext;
+    let gumStream;
+    let currentAudioBlob;
+
+    const recordBtn = document.getElementById('record-btn');
+    const audioPlayback = document.getElementById('audio-playback');
+    const audioBlock = document.getElementById('audio-block');
+
+    const customPlayer = document.getElementById('custom-player');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const seekBar = document.getElementById('seek-bar');
+    const currentTimeDisplay = document.getElementById('current-time');
+    const durationDisplay = document.getElementById('duration');
+
+    function formatTime(seconds) {
+        const min = Math.floor(seconds / 60);
+        const sec = Math.floor(seconds % 60);
+        return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+    }
+
+    function setupCustomPlayer(durationOverride = null) {
+        customPlayer.style.display = 'flex';
+        const duration = durationOverride || audioPlayback.duration;
+        seekBar.max = Math.floor(duration);
+        durationDisplay.textContent = formatTime(duration);
+    }
+
+    playPauseBtn.onclick = () => {
+        if (audioPlayback.paused) {
+            audioPlayback.play();
+            playPauseBtn.innerHTML = '<span class="material-symbols-rounded">pause</span>';
+        } else {
+            audioPlayback.pause();
+            playPauseBtn.innerHTML = '<span class="material-symbols-rounded">play_arrow</span>';
+        }
+    };
+
+    seekBar.oninput = () => {
+        audioPlayback.currentTime = seekBar.value;
+    };
+
+    audioPlayback.ontimeupdate = () => {
+        seekBar.value = Math.floor(audioPlayback.currentTime);
+        currentTimeDisplay.textContent = formatTime(audioPlayback.currentTime);
+    };
+
+    audioPlayback.onended = () => {
+        playPauseBtn.innerHTML = '<span class="material-symbols-rounded">play_arrow</span>';
+    };
+
+    recordBtn.addEventListener('click', async () => {
+        if (recorder && recorder.recording) {
+            recorder.stop();
+
+            gumStream.getAudioTracks()[0].stop(); // stop mic access
+
+            recorder.exportWAV(blob => {
+                currentAudioBlob = blob;
+                const audioUrl = URL.createObjectURL(blob);
+                audioPlayback.src = audioUrl;
+                audioBlock.style.display = 'block';
+
+                audioPlayback.onloadedmetadata = () => {
+                    if (isFinite(audioPlayback.duration) && !isNaN(audioPlayback.duration)) {
+                        setupCustomPlayer();
+                    } else {
+                        const temp = audioPlayback.cloneNode();
+                        temp.addEventListener('loadedmetadata', () => {
+                            temp.currentTime = Number.MAX_SAFE_INTEGER;
+                        });
+                        temp.addEventListener('timeupdate', () => {
+                            temp.pause();
+                            const realDuration = temp.currentTime;
+                            setupCustomPlayer(realDuration);
+                        });
+                        temp.src = audioPlayback.src;
+                        temp.load();
+                    }
+                };
+
+                // Send WAV to backend
+                const formData = new FormData();
+                formData.append('audio_data', blob, 'recording.wav');
+                formData.append('mode', 'text');
+
+                fetch('/upload_audio', {
+                    method: 'POST',
+                    body: formData,
+                }).catch(err => console.error('Upload failed:', err));
+            });
+
+            recordBtn.textContent = "Record";
+        } else {
+            try {
+                recordBtn.innerHTML = '<span class="material-symbols-rounded">mic</span> Preparing...';
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                gumStream = stream;
+                const input = audioContext.createMediaStreamSource(stream);
+                recorder = new Recorder(input, { numChannels: 1 });
+                recorder.record();
+                recordBtn.textContent = "⏹ Stop";
+            } catch (e) {
+                console.error('Mic access error:', e);
+                alert('Microphone access denied or unavailable.');
+            }
+        }
+    });
+
+    document.getElementById('query-from-audio').addEventListener('click', () => {
+        const queryBtn = document.getElementById('query-from-audio');
+        const recordingSpinner = document.getElementById('recording-spinner');
+        recordingSpinner.style.display = 'inline-block';
+        queryBtn.disabled = true;
+        queryBtn.querySelector('.btn-text').textContent = "";
+
+        if (!currentAudioBlob) {
+            alert("No audio available to process.");
+            return;
+        }
+
+        const selectedMode = document.querySelector('input[name="mode"]:checked').id;
+        const formData = new FormData();
+        formData.append('audio_data', currentAudioBlob, 'recording.wav');
+        formData.append('mode', selectedMode);
+
+        fetch('/handle_audio_file', {
+            method: 'POST',
+            body: formData,
+        })
+            .then(res => res.json())
+            .then(data => {
+                const inputField = document.getElementById('query-input');
+                const submitButton = document.getElementById('submit-btn');
+
+                if (selectedMode === 'text') {
+                    const transcription = data.transcription;
+                    if (transcription) {
+                        inputField.value = transcription;
+                        submitButton.style.opacity = '1';
+                        submitButton.style.pointerEvents = 'auto';
+                    }
+                } else if (selectedMode === 'audio') {
+                    if (data.fastapi_response) {
+                        alert("Audio matched successfully.");
+                    }
+                }
+            })
+            .catch(err => {
+                console.error("Error processing audio:", err);
+                alert("An error occurred while processing the audio.");
+            })
+            .finally(() => {
+                recordingSpinner.style.display = 'none';
+                queryBtn.disabled = false;
+                queryBtn.querySelector('.btn-text').textContent = "Use Recording as Query";
+            });
+    });
+</script>
+
+    </script>
+
+    <script>
+        const fileInput = document.getElementById('audio-file');
+        const uploadButton = document.getElementById('upload-file-btn');
+        const uploadSpinner = document.getElementById('upload-spinner');
+        const btnText = uploadButton.querySelector('.btn-text');
+
+        fileInput.addEventListener('change', () => {
+            uploadButton.style.display = fileInput.files.length > 0 ? 'inline-block' : 'none';
+        });
+
+        uploadButton.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        if (fileInput.files.length === 0) {
+            alert("Please select an audio file.");
+            return;
+        }
+
+        uploadSpinner.style.display = 'inline-block';
+        uploadButton.disabled = true;
+        btnText.textContent = "";
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('audio_data', file);
+        formData.append('mode', 'audio');
+
+        fetch('/upload_audio', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Upload complete:', data);
+            return fetch('/handle_audio_file', {
+                method: 'POST',
+                body: formData,
+            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Handle response:', data);
+            if (data.fastapi_response) {
+                alert("File processed successfully. Closest matched song is: " + data.fastapi_response.match_filename);
+            } else {
+                alert("File processing failed.");
+            }
+        })
+        .catch(err => {
+            console.error('Upload or processing failed:', err);
+            alert('Something went wrong during upload or processing.');
+        })
+        .finally(() => {
+            uploadSpinner.style.display = 'none';
+            uploadButton.disabled = false;
+            btnText.textContent = "Submit Uploaded File";
+        });
+    });
+    </script>
+    
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+
+        const validAudioTypes = [
+            'audio/mpeg',
+            'audio/wav',
+            'audio/webm',
+            'audio/ogg',
+            'audio/mp4',
+            'audio/x-wav',
+        ];
+
+        function isValidAudioFile(file) {
+            return validAudioTypes.includes(file.type);
+        }
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('highlight');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('highlight');
+            });
+        });
+
+        // Handle dropped files with validation
+        dropZone.addEventListener('drop', e => {
+            const droppedFiles = e.dataTransfer.files;
+            if (droppedFiles.length > 0) {
+                const file = droppedFiles[0];
+                if (!isValidAudioFile(file)) {
+                    alert('Only audio files are accepted (e.g., MP3, WAV).');
+                    return;
+                }
+
+                fileInput.files = droppedFiles;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+    </script>
+</body>
+</html>
