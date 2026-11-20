@@ -1,5 +1,7 @@
 # Sound-Sift-AI
 AI Similar Content Extractor Drexel University senior project 2025 (continued)
+<img width="1910" height="898" alt="image" src="https://github.com/user-attachments/assets/74a0ddfd-8489-4915-8067-e70ea72bc234" />
+
 
 ## Project Structure
 
@@ -132,6 +134,11 @@ To run the application, there are two different options at the moment which is t
 4. In a separate terminal cd in to `src/webservice/` and run `python flaskapp.py`
 
 5. Visit the URL given after running the flask app and you should see the frontend for the application.
+
+### Output
+
+<img width="1904" height="897" alt="image" src="https://github.com/user-attachments/assets/7be8459b-c65e-4a35-b9f4-32c90f0c3ee9" />
+
 
 ### To use the transcription feature
 1. You must install `ffmpeg`. 
