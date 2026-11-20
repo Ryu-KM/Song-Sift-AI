@@ -6,7 +6,7 @@ import os
 from bs4 import BeautifulSoup
 
 GENIUS_API_URL = "https://api.genius.com"
-ACCESS_TOKEN = "bDzYC4KQhEY0RJgFFheRk4jdywN0GVbc4YvfopGc5SmdJN4EV68MzuNhiRGY28mE" 
+ACCESS_TOKEN = os.getenv("GENIUS_ACCESS_TOKEN") 
 SEARCH_TERM = "t"
 NEW_SONGS_TO_COLLECT = 100
 SONGS_PER_PAGE = 50
