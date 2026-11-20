@@ -118,14 +118,14 @@ def main():
     create_database(db_name)
 
     # Process an audio file and store its features in the database, get the first three songs in the song folder
-    audio_folder = "ben_melaudioextraction/songs"  # Replace with your audio folder path
+    audio_folder = "research/audio_extraction/songs"  # Replace with your audio folder path
     audio_files = [os.path.join(audio_folder, f) for f in os.listdir(audio_folder) if f.endswith('.mp3')]
     for audio_file in audio_files:
         print(f"Processing file: {audio_file}")
         process_audio_file(audio_file, db_name)
 
     # Process a snippet of audio and compare it to the database
-    snippet_file_path = "ben_melaudioextraction/BillieLunch.mp3"  # Replace with your snippet file path
+    snippet_file_path = "research/audio_extraction/BillieLunch.mp3"  # Replace with your snippet file path
     process_snippet(snippet_file_path, db_name)
 
 main()

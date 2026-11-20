@@ -89,8 +89,8 @@ def extract_lyrics(song_details):
 
 if __name__ == "__main__":
     # Load existing songs
-    if os.path.exists('t_songs_with_lyrics.json'):
-        with open('t_songs_with_lyrics.json', 'r') as f:
+    if os.path.exists('data/t_songs_with_lyrics.json'):
+        with open('data/t_songs_with_lyrics.json', 'r') as f:
             songs = json.load(f)
         print(f"There are currently {len(songs)} songs in t_songs_with_lyrics.json'.")
     else:
@@ -110,6 +110,6 @@ if __name__ == "__main__":
 
     # Add new songs to file 
     songs.extend(new_songs)
-    with open('t_songs_with_lyrics.json', 'w') as f:
+    with open('data/t_songs_with_lyrics.json', 'w') as f:
         json.dump(songs, f, indent=4)
     print(f"Appended {len(new_songs)} new songs. Total is now {len(songs)} songs.")

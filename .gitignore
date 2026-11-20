@@ -3,10 +3,12 @@
 src/API/__pycache__/
 .cache
 api_keys.*
-ben_melaudioextraction/songs/*.mp3
-ben_melaudioextraction/songs/*.rar
+research/audio_extraction/songs/*.mp3
+research/audio_extraction/songs/*.rar
 *.db
-ben_melaudioextraction/songs/*.nfo
-ben_melaudioextraction/songs/*.jpg
+research/audio_extraction/songs/*.nfo
+research/audio_extraction/songs/*.jpg
 *:Zone.Identifier
 __pycache__/
+src/webservice/recordings/
+src/webservice/uploads/

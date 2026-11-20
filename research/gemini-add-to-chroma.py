@@ -16,7 +16,7 @@ print(f"Number of documents in collection (should be >0 if data persists): {coll
 # Configure the Gemini API
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-json_file_path = 't_songs_with_lyrics.json'
+json_file_path = 'data/t_songs_with_lyrics.json'
 with open(json_file_path, 'r') as file:
     lyrics_data = json.load(file)
 

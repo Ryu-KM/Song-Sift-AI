@@ -5,7 +5,7 @@ import numpy as np
 import io
 
 DB_NAME = "chroma_features.db"
-SONG_DIR = "ben_melaudioextraction/songs"
+SONG_DIR = "research/audio_extraction/songs"
 
 def create_database():
     conn = sqlite3.connect(DB_NAME)

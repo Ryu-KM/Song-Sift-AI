@@ -13,7 +13,7 @@ model.max_seq_length = 512
 model.tokenizer.padding_side = "right"
 
 # Load lyrics from a CSV file
-csv_file_path = 'research/Songs.csv'  # Change this to your CSV file path
+csv_file_path = 'data/Songs.csv'  # Change this to your CSV file path
 lyrics_df = pd.read_csv(csv_file_path)
 
 # Assume we have a query to check against the lyrics

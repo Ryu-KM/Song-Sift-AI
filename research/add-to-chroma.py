@@ -19,7 +19,7 @@ model.max_seq_length = 512
 model.tokenizer.padding_side = "right"
 
 # Load the lyrics from the JSON file (adjust the path to your file)
-json_file_path = 't_songs_with_lyrics.json'  # Change this to your JSON file path
+json_file_path = 'data/t_songs_with_lyrics.json'  # Change this to your JSON file path
 with open(json_file_path, 'r') as file:
     lyrics_data = json.load(file)
 

@@ -1,6 +1,22 @@
 # Similar-Content-Extraction-Senior-Proj
 AI Similar Content Extractor Drexel senior project 24-25
 
+## Project Structure
+
+```
+data/                 Song datasets (JSON lyrics collections, Songs.csv)
+docs/                 References (embedding model links)
+research/             Experiments and ChromaDB setup scripts
+  audio_extraction/   Audio feature (chroma/mel) extraction experiments
+  chromaFiles/        Generated Chroma database (not tracked)
+scripts/              Lyrics collection and model performance comparison
+src/
+  API/                FastAPI backends (main.py = Hugging Face, geminiMain.py = Gemini)
+  webservice/         Flask frontend
+```
+
+Run scripts from the repository root unless noted otherwise (e.g. `python scripts/lyricsCollector.py`).
+
 ## Build
 
 ### Prerequisites
