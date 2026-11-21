@@ -99,7 +99,7 @@ To run the application, there are two different options at the moment which is t
 
 3. In the root directory run `python research/gemini-add-to-chroma.py`
 
-4. cd in to `src/api/` and run `uvicorn geminiMain:app --reload`
+4. cd in to `src/api/` and run `uvicorn geminiMain:app --reload` for the gemini model and  `uvicorn main:app --reload` for the local hugging face model
 
 5. In a separate terminal cd in to `src/webservice/` and run `python flaskapp.py`
 
