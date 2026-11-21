@@ -1,0 +1,4 @@
+2026-11-21 04:29:40 - INFO - Dataset has 57650 songs.
+2026-11-21 04:29:41 - INFO - Wrote 10000 songs to data/spotify_songs_with_lyrics.json.
+2026-11-21 04:30:29 - INFO - Dataset has 57650 songs. - importSpotifyDataset.py:41
+2026-11-21 04:30:30 - INFO - Wrote 10000 songs to data/spotify_songs_with_lyrics.json. - importSpotifyDataset.py:69

@@ -19,16 +19,24 @@ model.max_seq_length = 512
 model.tokenizer.padding_side = "right"
 
 # Load songs from every lyrics file, skipping songs with no lyrics and duplicate ids
-json_file_paths = ['data/t_songs_with_lyrics.json', 'data/pop_songs_with_lyrics.json']
+json_file_paths = ['data/t_songs_with_lyrics.json', 'data/pop_songs_with_lyrics.json', 'data/spotify_songs_with_lyrics.json']
 lyrics_data = []
 seen_ids = set()
 for json_file_path in json_file_paths:
+    if not os.path.exists(json_file_path):
+        print(f"Skipping missing file {json_file_path}")
+        continue
     with open(json_file_path, 'r') as file:
         for song in json.load(file):
             if song.get('lyrics') and song['id'] not in seen_ids:
                 seen_ids.add(song['id'])
                 lyrics_data.append(song)
 print(f"Loaded {len(lyrics_data)} songs with lyrics")
+
+# Skip songs already stored so re-running only embeds new songs
+stored_ids = set(collection.get(include=[])['ids'])
+lyrics_data = [song for song in lyrics_data if str(song['id']) not in stored_ids]
+print(f"{len(lyrics_data)} new songs to embed")
 
 # Function to add end-of-sequence token if required
 def add_eos(input_examples):
@@ -37,28 +45,26 @@ def add_eos(input_examples):
         input_examples = [input_example + eos_token for input_example in input_examples]
     return input_examples
 
-for song in lyrics_data:
-    title = song['title']
-    artist = song['artist']
-    lyric = song['lyrics']
-    song_id = song['id']
-    
-    lyric_embedding = model.encode(add_eos([lyric]), batch_size=1, normalize_embeddings=True)
-    lyric_embedding = lyric_embedding.squeeze().tolist()
+# Embed and store in batches, which is much faster than one song at a time
+BATCH_SIZE = 256
+for start in range(0, len(lyrics_data), BATCH_SIZE):
+    batch = lyrics_data[start:start + BATCH_SIZE]
+
+    lyric_embeddings = model.encode(add_eos([song['lyrics'] for song in batch]), batch_size=32, normalize_embeddings=True)
 
     collection.add(
-        embeddings=[lyric_embedding],
+        embeddings=lyric_embeddings.tolist(),
         metadatas=[{
-            "artist": artist, 
-            "title": title, 
-            "lyrics": lyric,
-        }],
-        ids=[str(song_id)],
-        documents=[""]
+            "artist": song['artist'],
+            "title": song['title'],
+            "lyrics": song['lyrics'],
+        } for song in batch],
+        ids=[str(song['id']) for song in batch],
+        documents=[""] * len(batch)
     )
 
     # Print confirmation
-    print(f"Stored '{title}' by {artist} in the Chroma database.")
+    print(f"Stored {start + len(batch)}/{len(lyrics_data)} songs in the Chroma database.")
 
 print("All entries stored with similarity scores in the Chroma database.")
 
