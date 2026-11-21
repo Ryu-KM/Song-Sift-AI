@@ -2,9 +2,20 @@ import json
 import os
 import re
 import sys
-
+import logging
 import kagglehub
 import pandas as pd
+
+# init logger
+os.makedirs('log', exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    filename='log/importSpotifyDataset.log',
+    filemode='a',
+    encoding='utf-8'
+    )
 
 # Usage: python scripts/importSpotifyDataset.py [number_of_songs]   (default 10000, "all" for every song)
 DATASET = "notshrirang/spotify-million-song-dataset"
@@ -27,7 +38,7 @@ if __name__ == "__main__":
 
     path = kagglehub.dataset_download(DATASET)
     df = pd.read_csv(os.path.join(path, "spotify_millsongdata.csv"))
-    print(f"Dataset has {len(df)} songs.")
+    logging.info(f"Dataset has {len(df)} songs.")
 
     # Id from the original row number so ids stay the same between runs
     df['id'] = "spotify_" + df.index.astype(str)
@@ -55,4 +66,4 @@ if __name__ == "__main__":
 
     with open(OUTPUT_PATH, 'w') as f:
         json.dump(songs, f, indent=4)
-    print(f"Wrote {len(songs)} songs to {OUTPUT_PATH}.")
+    logging.info(f"Wrote {len(songs)} songs to {OUTPUT_PATH}.")
