@@ -17,11 +17,11 @@ logging.basicConfig(
     encoding='utf-8'
     )
 
-# Usage: python scripts/importSpotifyDataset.py [number_of_songs]   (default 10000, "all" for every song)
+# Usage: python scripts/importSpotifyDataset.py [number_of_songs]   (default 20000, "all" for every song)
 DATASET = "notshrirang/spotify-million-song-dataset"
 OUTPUT_PATH = 'data/spotify_songs_with_lyrics.json'
 EXISTING_PATHS = ['data/t_songs_with_lyrics.json', 'data/pop_songs_with_lyrics.json']
-DEFAULT_SONGS_TO_IMPORT = 10000
+DEFAULT_SONGS_TO_IMPORT = 20000
 RANDOM_SEED = 42
 
 def clean_lyrics(text):
