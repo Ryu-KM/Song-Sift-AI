@@ -65,14 +65,14 @@ def query_lyrics(query: str = Query(..., description="Query text to search for s
         include=["embeddings", "metadatas", "distances", "documents"]
     )
 
-    if results["documents"] and results["distances"] and results["embeddings"]:
+    if results["documents"] and results["distances"]:
         grouped_results: Dict[str, LyricSearchResult] = {}
 
         # Iterate over results and group them by artist + title
         for i in range(len(results["documents"][0])):
             artist = results["metadatas"][0][i]["artist"]
             title = results["metadatas"][0][i]["title"]
-            lyric_section = results["documents"][0][i]
+            lyric_section = results["metadatas"][0][i]["lyrics"]
             distance = results["distances"][0][i]
             similarity_score = (1 - (distance / 2)) * 100
             youtube_query = "https://www.youtube.com/results?search_query=" + artist + " - " + title

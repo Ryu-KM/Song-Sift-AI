@@ -17,16 +17,24 @@ print(f"Number of documents in collection (should be >0 if data persists): {coll
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Load songs from every lyrics file, skipping songs with no lyrics and duplicate ids
-json_file_paths = ['data/t_songs_with_lyrics.json', 'data/pop_songs_with_lyrics.json']
+json_file_paths = ['data/t_songs_with_lyrics.json', 'data/pop_songs_with_lyrics.json', 'data/spotify_songs_with_lyrics.json']
 lyrics_data = []
 seen_ids = set()
 for json_file_path in json_file_paths:
+    if not os.path.exists(json_file_path):
+        print(f"Skipping missing file {json_file_path}")
+        continue
     with open(json_file_path, 'r') as file:
         for song in json.load(file):
             if song.get('lyrics') and song['id'] not in seen_ids:
                 seen_ids.add(song['id'])
                 lyrics_data.append(song)
 print(f"Loaded {len(lyrics_data)} songs with lyrics")
+
+# Skip songs already stored so the script can resume after a quota/rate limit error
+stored_song_ids = {chunk_id.rsplit("_chunk_", 1)[0] for chunk_id in collection.get(include=[])['ids']}
+lyrics_data = [song for song in lyrics_data if str(song['id']) not in stored_song_ids]
+print(f"{len(lyrics_data)} new songs to embed")
 
 # Function to split lyrics into exactly 5 chunks at newline characters
 def split_into_chunks(lyrics, num_chunks=5):
