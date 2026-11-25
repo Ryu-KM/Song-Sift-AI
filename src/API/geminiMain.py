@@ -14,7 +14,7 @@ from utils import transcribe_audio_blob_to_text, convert_audio_to_wav
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 app = FastAPI()
 
-persist_directory = os.path.join("..", "..", "research", "chromaFiles")
+persist_directory = os.getenv("CHROMA_PATH", os.path.join("..", "..", "research", "chromaFiles"))
 
 if not os.path.exists(persist_directory):
     os.makedirs(persist_directory)
@@ -113,7 +113,7 @@ def query_lyrics(query: str = Query(..., description="Query text to search for s
             title = results["metadatas"][0][i]["title"]
             lyric_section = results["documents"][0][i]
             distance = results["distances"][0][i]
-            similarity_score = (1 - (distance / 2)) * 100
+            similarity_score = (1 - distance) * 100  # cosine distance = 1 - cosine similarity
             youtube_query = "https://www.youtube.com/results?search_query=" + artist + " - " + title
 
             # Use a unique key (artist + title) to group the results
@@ -162,7 +162,7 @@ def match_snippet_route(file: UploadFile = File(...)):
                 raise HTTPException(status_code=500, detail="Failed to convert audio to .wav format.")
             tmp_path = converted_path
 
-        db_name = "../../audio_features.db"
+        db_name = os.getenv("AUDIO_DB_PATH", "../../audio_features.db")
         result = process_snippet(tmp_path, db_name)
 
         print(f"Best match ID: {result['best_match_id']}")
