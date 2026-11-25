@@ -1,0 +1,25 @@
+services:
+  api:
+  # folder containing the backend Dockerfile
+    build: ./src/API                 
+    env_file: .env       
+    environment:
+      CHROMA_PATH: /data/chromaFiles
+      AUDIO_DB_PATH: /data/audio/audio_features.db
+    volumes:
+      # host_path:container_path — data stays on your machine, not in the image
+      - ./research/chromaFiles:/data/chromaFiles
+      - ./research/audio_extraction:/data/audio
+    ports:
+      - "8000:8000"                  # host:container -> http://localhost:8000/docs
+
+  web:
+    build: ./src/webservice
+    env_file: .env                   # provides SPOTIPY_CLIENT_ID / SPOTIPY_CLIENT_SECRET
+    environment:
+      # "api" is the service name above; Compose makes it a hostname on the shared network.
+      FASTAPI_BASE_URL: http://api:8000
+    ports:
+      - "5000:5000"                  # -> http://localhost:5000
+    depends_on:
+      - api                          # start api first (doesn't wait for it to be ready)
