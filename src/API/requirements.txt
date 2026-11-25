@@ -1,0 +1,14 @@
+# torch is installed separately in the Dockerfile (CPU-only build, much smaller)
+fastapi==0.115.5
+uvicorn==0.32.0
+python-multipart==0.0.17
+anthropic==2.14.0
+sentence-transformers==3.2.1
+transformers==4.46.0
+chromadb==0.5.18
+numpy==2.1.2
+scipy==1.14.1
+librosa==0.10.2.post1
+soundfile==0.12.1
+pydub==0.25.1
+SpeechRecognition==3.11.0
