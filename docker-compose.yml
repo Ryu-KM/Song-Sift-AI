@@ -1,7 +1,8 @@
 services:
   api:
   # folder containing the backend Dockerfile
-    build: ./src/API                 
+    build: ./src/API
+    image: rkm730/sound-sift-api:0.0.1                 
     env_file: .env       
     environment:
       CHROMA_PATH: /data/chromaFiles
@@ -15,6 +16,7 @@ services:
 
   web:
     build: ./src/webservice
+    image: rkm730/sound-sift-web:0.0.1
     env_file: .env                   # provides SPOTIPY_CLIENT_ID / SPOTIPY_CLIENT_SECRET
     environment:
       # "api" is the service name above; Compose makes it a hostname on the shared network.

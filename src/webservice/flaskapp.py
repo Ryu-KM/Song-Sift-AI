@@ -20,7 +20,7 @@ client_credentials_manager = SpotifyClientCredentials(
 )
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
-FASTAPI_BASE_URL = "http://localhost:8000"
+FASTAPI_BASE_URL = os.getenv("FASTAPI_BASE_URL", "http://localhost:8000")
 
 @app.route('/')
 def index():

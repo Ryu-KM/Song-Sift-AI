@@ -74,7 +74,7 @@ def query_lyrics(query: str = Query(..., description="Query text to search for s
             title = results["metadatas"][0][i]["title"]
             lyric_section = results["metadatas"][0][i]["lyrics"]
             distance = results["distances"][0][i]
-            similarity_score = (1 - (distance / 2)) * 100
+            similarity_score = add_user_friendly_score(1 - (distance / 2))
             youtube_query = "https://www.youtube.com/results?search_query=" + artist + " - " + title
 
             # Use a unique key (artist + title) to group the results
